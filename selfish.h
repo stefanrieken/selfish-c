@@ -67,4 +67,8 @@ extern char * to_name(int number);
 //
 // parse
 //
+void reset_linecount();
+void expected(char expected, char got);
+void unexpected(const char * message);
+void weird(const char * message, char got);
 bool parseCode(object * o);

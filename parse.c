@@ -109,7 +109,7 @@ bool parseBracketArguments(object * o) {
 			if (ch == ',') 	parse_code(o, arg_condition);
 		}
 		if (ch != ')') {
-			printf("Expected ')' got %c\n", ch);
+			expected('(', ch);
 			return false; // TODO abort all parsing
 		}
 		return true;
@@ -155,12 +155,12 @@ object * parseInt(int ch) {
 object * parseObject() {
 	object * newObject = new_object(METHOD);
 	if (!parse_code(newObject, bracketed_condition)) {
-		printf("Expected object body.");
+		unexpected("Expected object body.");
 		return NULL;
 	} else {
 		int ch = readChar(whitespace_condition);
 		if (ch != '}') 	{
-			printf("Expected '}'");
+			expected('}', ch);
 			return NULL;
 		}
 		return newObject;
@@ -214,7 +214,7 @@ bool parse_code(object * o, condition cond) {
 			}
 		} else {
 			if (ch != '\n') {
-				printf("Parse error at char '%c'\n", ch);
+				weird("Parse error at char '%c'\n", ch);
 				return false;
 				// TODO clear object
 			}
