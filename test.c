@@ -48,15 +48,15 @@ int main(void)
  
     printf("Now doing a REPL. Please type stuff. (Note: only 'inspect' and '\"bla\" self.hello' currently work.)\n");
 
-//    int inspectName = to_number("inspect");
-//    object * inspect = malloc(sizeof(object));
-//    inspect->type = PRIMITIVE;
-//    inspect->primitive_method = primitive_inspect;
+    int inspectName = to_number("inspect");
+    object * inspect = malloc(sizeof(object));
+    inspect->type = PRIMITIVE;
+    inspect->primitive_method = primitive_inspect;
 
     object * repl = new_object(METHOD);
     append_assoc(repl, selfName, repl);
     append_assoc(repl, helloName, method);
-//    append_assoc(repl, inspectName, inspect);
+    append_assoc(repl, inspectName, inspect);
 
     repl->type = METHOD;
 

@@ -81,12 +81,6 @@ char * parse(condition cond, int ch) {
 	return str;
 }
 
-bool parseName(int ch, object * o) {
-	char * name = parse(name_condition, ch);
-	append_code(o, to_number(name));
-	return true;
-}
-
 bool parse_code(object * o, condition cond);
 bool parseBracketArguments(object * o) {
 	int ch = readChar(whitespace_condition_no_eol); // TODO only works for REPL
@@ -127,8 +121,8 @@ bool parseBracketArguments(object * o) {
 }
 
 bool parseDotInvocation(object * o) {
-	parseName(buffered_read(), o);
-	o->code[o->value_size-1] = -(o->code[o->value_size-1]); // negate
+	char * name = parse(name_condition, buffered_read());
+	append_code(o, -to_number(name));
 	return parseBracketArguments(o);
 }
 
@@ -199,7 +193,25 @@ bool parse_code(object * o, condition cond) {
 		} else if (ch == '.') {
 			success = parseDotInvocation(o);
 		} else if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_') {
-			success = parseName(ch, o);
+			char * name = parse(name_condition, ch);
+
+			ch = readChar(whitespace_condition_no_eol);
+			if (ch == ':') {
+				ch = readChar(whitespace_condition_no_eol);
+				// this is a static def
+				object * literal = parseLiteral(ch);	
+				if (literal == NULL) {
+					printf("Expected literal\n");
+					return false;
+				}
+
+				int num = to_number(name);
+				append_assoc(o, num, literal);
+				append_code(o, num);
+			} else {
+				buffer_return(ch);
+				append_code(o, to_number(name));
+			}
 		} else {
 			if (ch != '\n') {
 				printf("Parse error at char '%c'\n", ch);
