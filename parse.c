@@ -89,7 +89,7 @@ bool parseName(int ch, object * o) {
 
 bool parse_code(object * o, condition cond);
 bool parseBracketArguments(object * o) {
-	int ch = readChar(whitespace_condition);
+	int ch = readChar(whitespace_condition_no_eol); // TODO only works for REPL
 	if (ch == '(') {
 		int base_position = o->value_size - 2;
 
@@ -119,7 +119,9 @@ bool parseBracketArguments(object * o) {
 			return false; // TODO abort all parsing
 		}
 		return true;
-		
+	} else {
+		buffer_return(ch);
+		return true; // no args though
 	}
 	return false;
 }
@@ -130,7 +132,7 @@ bool parseDotInvocation(object * o) {
 	return parseBracketArguments(o);
 }
 
-bool parseString(object * o) {
+object * parseString() {
 	char * str = parse(string_condition, buffered_read());
 	buffered_read(); // drop final '"'
 
@@ -138,14 +140,10 @@ bool parseString(object * o) {
 	s->string_value = str;
 	s->value_size = sizeof(str);
 
-	int num = to_number("");
-	append_assoc(o, num, s);
-	append_code(o, num);
-
-	return true;
+	return s;
 }
 
-bool parseInt(int ch, object * o) {
+object * parseInt(int ch) {
 	int value = 0;
 	while (ch >= '0' && ch <= '9') {
 		value = value * 10 + ch;
@@ -156,45 +154,52 @@ bool parseInt(int ch, object * o) {
 	object * i = new_object(INT);
 	i->int_value = value;
 
-	int num = to_number("");
-	append_assoc(o, num, i);
-	append_code(o, num);
-
-	return true;
+	return i;
 }
 
 // parse code in brackets.
-bool parseObject(object * o) {
+object * parseObject() {
 	object * newObject = new_object(METHOD);
-	parse_code(newObject, bracketed_condition);
-	int ch = readChar(whitespace_condition);
-	if (ch != '}') 	{
-		printf("Expected '}'");
-		return false;
+	if (!parse_code(newObject, bracketed_condition)) {
+		printf("Expected object body.");
+		return NULL;
+	} else {
+		int ch = readChar(whitespace_condition);
+		if (ch != '}') 	{
+			printf("Expected '}'");
+			return NULL;
+		}
+		return newObject;
+	}
+}
+
+object * parseLiteral(int ch) {
+	object * literal = NULL;
+	if (ch == '"') {
+		literal = parseString();
+	} else if (ch >= '0' && ch <= '9') {
+		literal = parseInt(ch);
+	} else if (ch == '{') {
+		literal = parseObject();
 	}
 
-	int num = to_number("");
-	append_assoc(o, num, newObject);
-	append_code(o, num);
-
-	return true;
+	return literal;
 }
 
 bool parse_code(object * o, condition cond) {
-	int ch = readChar(whitespace_condition_no_eol); // TODO this is only interesting for REPL
+	int ch = readChar(whitespace_condition_no_eol); // TODO this condition is only interesting for REPL
 
 	bool success = true;
 	while (success && cond(ch)) {
-		if (ch == '.') {
+		object * literal = parseLiteral(ch);
+		if (literal != NULL) {
+			int num = to_number("");
+			append_assoc(o, num, literal);
+			append_code(o, num);
+		} else if (ch == '.') {
 			success = parseDotInvocation(o);
-		} else if (ch == '"') {
-			success = parseString(o);
-		} else if (ch >= '0' && ch <= '9') {
-			success = parseInt(ch, o);
 		} else if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_') {
 			success = parseName(ch, o);
-		} else if (ch == '{') {
-			success = parseObject(o);
 		} else {
 			if (ch != '\n') {
 				printf("Parse error at char '%c'\n", ch);
@@ -211,6 +216,6 @@ bool parse_code(object * o, condition cond) {
 }
 
 // parse unbracketed code (i.e. top level object)
-bool parseCode(object * o) {
+bool parseCode(object * o) {	
 	return parse_code(o, code_condition);
 }
