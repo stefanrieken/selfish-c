@@ -1,3 +1,4 @@
+#include <malloc.h>
 #include "selfish.h"
 
 // a hello, world demo in 'manually compiled Selfish'
@@ -21,23 +22,20 @@ object * primitive_inspect(object * method, object * self) {
 
 int main(void)
 {
-    object * arg = malloc(sizeof(object));
-    arg->type = STRING;
+    object * arg = new_object(STRING);
     arg->string_value = "world";
     arg->value_size = sizeof(arg->string_value);
 
     push (arg);
 
-    object * hello = malloc(sizeof(object));
-    hello->type = PRIMITIVE;
+    object * hello = new_object(PRIMITIVE);
     hello->primitive_method = primitive_hello;
 
     // now the Selfish code
     int selfName = to_number("self");
     int helloName = to_number("hello");
 
-    object * method = malloc(sizeof(object));
-    method->type = METHOD;
+    object * method = new_object(METHOD);
     //method->code[] = { 1, -2, 0 }; // "world" self .hello;
     append_code(method, selfName);
     append_code(method, -helloName);
@@ -55,7 +53,7 @@ int main(void)
 //    inspect->type = PRIMITIVE;
 //    inspect->primitive_method = primitive_inspect;
 
-    object * repl = malloc(sizeof(object));
+    object * repl = new_object(METHOD);
     append_assoc(repl, selfName, repl);
     append_assoc(repl, helloName, method);
 //    append_assoc(repl, inspectName, inspect);

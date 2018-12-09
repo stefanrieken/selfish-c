@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <malloc.h>
+#include <stdbool.h>
 
 typedef enum type_code {
     INT,
@@ -39,7 +39,10 @@ typedef struct object {
 //
 extern void append_code(object * o, int c);
 extern void prepend_code(object * o, int c);
+extern void insert_code(object * o, int c);
 extern void append_assoc(object * o, int number, object * value);
+
+extern object * new_object(type_code type);
 
 //
 // stack
@@ -64,4 +67,4 @@ extern char * to_name(int number);
 //
 // parse
 //
-void parseCode(object * o);
+bool parseCode(object * o);

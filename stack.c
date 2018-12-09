@@ -1,3 +1,4 @@
+#include <malloc.h>
 #include "selfish.h"
 
 object ** stack = NULL;
